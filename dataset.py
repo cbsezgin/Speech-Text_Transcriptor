@@ -12,5 +12,5 @@ class LibriSpeechDataset(Dataset):
         super(LibriSpeechDataset, self).__init__()
         self.config = config
         self.param = config[set]
-        self.label_encoder =
+        # self.label_encoder =
 
