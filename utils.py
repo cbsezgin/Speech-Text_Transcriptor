@@ -71,3 +71,36 @@ class TextTransformer():
         argmax = torch.argmax(output, dim=2)
         decodes = []
         targets = []
+        for i, arg in enumerate(argmax):
+            dec = []
+            targets.append(self.int_to_text(labels[i][:label_len[i]].to_list()))
+
+            for j, index in enumerate(arg):
+                if index != blank_label:
+                    if collapse_pad and (j != 0) and (index == arg[j-1]):
+                        continue
+                    dec.append(index.item())
+            decodes.append(self.int_to_text(dec))
+        return decodes, targets
+
+def audio_to_mel(x, hparams):
+    spec = librosa.feature.melspectrogram(
+        x,
+        sr=hparams["sr"],
+        n_fft=hparams["n_fft"],
+        win_length=hparams["win_length"],
+        hop_length=hparams["hop_length"],
+        n_mels=hparams["n_mels"],
+        power=1,
+        fmin=0,
+        fmax=8000
+    )
+
+    spec = np.log(np.clip(spec, a_min=1e-5, a_max=None))
+    spec = torch.FloatTensor(spec)
+
+    return spec
+
+def augment(spec, chunk_size=30, freq_mask_param=10, time_mask_param=6):
+    freq_mask = torchaudio.transforms.FrequencyMasking(freq_mask_param=int(freq_mask_param), iid_masks=True)
+    time_mask = torchaudio.transforms.TimeMasking(time_mask_param=int(time_mask_param), iid_masks=True)
