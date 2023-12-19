@@ -6,6 +6,9 @@ import torchaudio
 import librosa
 from torch.nn.utils.rnn import pad_sequence
 
+from models import QuartzNet
+
+
 class TextTransformer():
     def __init__(self):
         self.char_map_str = """
@@ -101,6 +104,43 @@ def audio_to_mel(x, hparams):
 
     return spec
 
+
 def augment(spec, chunk_size=30, freq_mask_param=10, time_mask_param=6):
     freq_mask = torchaudio.transforms.FrequencyMasking(freq_mask_param=int(freq_mask_param), iid_masks=True)
     time_mask = torchaudio.transforms.TimeMasking(time_mask_param=int(time_mask_param), iid_masks=True)
+    num_chunks = spec.shape[1] // int(chunk_size)
+
+    if num_chunks <= 1:
+        return spec
+    else:
+        chunks = torch.split(spec, num_chunks, dim=1)
+        to_be_masked = torch.stack(list(chunks[:-1]), dim=1).unsqueeze(1)
+        time_mask(to_be_masked)
+        freq_mask(to_be_masked)
+        masked = to_be_masked.squeeze(1).permute(1,0,2).reshape(spec.shape[0], -1)
+        return torch.cat([masked, chunks[-1]], dim=1)
+
+
+def custom_collate_fn(data):
+    melpecs, texts, input_lengths, target_length = zip(*data)
+
+    specs = [torch.transpose(spec, 0, 1) for spec in melpecs]
+    specs = pad_sequence(specs, batch_first=True)
+    specs = torch.transpose(specs, 1, 2)
+    labels = pad_sequence(texts, batch_first=True)
+
+    return specs, labels, torch.tensor(input_lengths), torch.tensor(target_length)
+
+
+def create_model(model, in_channels, output_size):
+    models = ["quartznet5x5", "quartznet10x5", "quartznet15x5"]
+    assert (model in models), f"Unknown model: {model}"
+
+    if model == "quartznet5x5":
+        return QuartzNet(repeat=0, in_channels=input_size, out_channels=output_size)
+
+    elif model == "quartznet10x5":
+        return QuartzNet(repeat=1, in_channels=input_size, out_channels=output_size)
+
+    elif model == "quartznet15x5":
+        return QuartzNet(repeat=2, in_channels=input_size, out_channels=output_size)

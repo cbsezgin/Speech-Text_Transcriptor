@@ -1,0 +1,46 @@
+model: quartznet5x5
+
+train:
+  data_list: filelists/train_data.txt
+  data_dir: ["data/train"]
+  apply_speed_perturbation: True
+  apply_masking: True
+
+val:
+  data_list: filelists/val_data.txt
+  data_dir: ["data/val"]
+
+test:
+  weights: chekpoints/best_model.pt
+  data_list: filelists/test_data.txt
+  data_dir: ["data/test"]
+
+max_length: 12
+epochs: 2
+batch_size: 32
+learning_rate: 5e-4
+weight_decay: 0.0001
+checkpoint_dir: checkpoints/
+log_dir: logs/
+use_onecyclelr: True
+normalize: True
+num_workers: 2
+
+max_lr: 1e-3
+div_factor: 25.0
+pct_start: 0.3
+
+speed_parturbation: 0.1
+masking:
+  chunk_size: 60
+  freq_masking: 10
+  time_masking: 10
+
+spec_params:
+  sr: 22050
+  n_mels: 64
+  n_fft: 320
+  win_length: 320
+  hop_length: 160
+
+stats: filelists/stats_64.npy

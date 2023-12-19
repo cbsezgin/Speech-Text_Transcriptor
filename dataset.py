@@ -6,7 +6,7 @@ from torch.nn.functional import normalize
 import re
 import os
 import librosa
-from utils import TextTransformer, audio_to_mel
+from utils import TextTransformer, audio_to_mel, augment
 
 class LibriSpeechDataset(Dataset):
     def __init__(self, config, set):
@@ -57,8 +57,12 @@ class LibriSpeechDataset(Dataset):
             mel_spectrogram = normalize(mel_spectrogram)
 
         if self.param.get("apply_masking", None):
-            # mel_spectrogram =
+            mel_spectrogram = augment(mel_spectrogram, *self.config["masking"].values())
 
+        input_length = mel_spectrogram.shape[1]
+        label_length = len(transcription)
+
+        return mel_spectrogram, transcription, input_length, label_length
 
 
     def create_data_list(self):
@@ -79,5 +83,3 @@ class LibriSpeechDataset(Dataset):
                         data_list.write(f"{os.path.join(root, file)} {os.path.join(root, label)}\n")
 
         data_list.close()
-
-
