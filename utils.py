@@ -132,15 +132,15 @@ def custom_collate_fn(data):
     return specs, labels, torch.tensor(input_lengths), torch.tensor(target_length)
 
 
-def create_model(model, in_channels, output_size):
+def create_model(model, in_channels, out_channels):
     models = ["quartznet5x5", "quartznet10x5", "quartznet15x5"]
     assert (model in models), f"Unknown model: {model}"
 
     if model == "quartznet5x5":
-        return QuartzNet(repeat=0, in_channels=input_size, out_channels=output_size)
+        return QuartzNet(repeat=0, in_channels=in_channels, out_channels=out_channels)
 
     elif model == "quartznet10x5":
-        return QuartzNet(repeat=1, in_channels=input_size, out_channels=output_size)
+        return QuartzNet(repeat=1, in_channels=in_channels, out_channels=out_channels)
 
     elif model == "quartznet15x5":
-        return QuartzNet(repeat=2, in_channels=input_size, out_channels=output_size)
+        return QuartzNet(repeat=2, in_channels=in_channels, out_channels=out_channels)
